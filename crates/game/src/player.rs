@@ -52,7 +52,7 @@ pub fn compute_velocity_from_input(input: &ButtonInput<KeyCode>, speed: f32) -> 
     compute_velocity_from_bools(up, down, left, right, speed)
 }
 
-/// Testable pure function: compute movement delta from booleans
+/// Testable pure function: compute velocity vector (units per second) from booleans
 pub fn compute_velocity_from_bools(
     up: bool,
     down: bool,
@@ -121,5 +121,122 @@ mod tests {
         ));
         let len = v.length();
         assert!((len - speed).abs() < EPS);
+    }
+
+    #[test]
+    fn test_delta_time_scaling_equivalence() {
+        // Verify that applying velocity * total_time equals repeated steps summing to the same total time.
+        let speed = 80.0;
+        let v = compute_velocity_from_bools(true, false, false, false, speed); // up
+        let total_time = 0.123_f32;
+
+        // single-step displacement
+        let single = v * total_time;
+
+        // multi-step displacement (e.g., 7 steps)
+        let steps = 7u32;
+        let dt = total_time / steps as f32;
+        let mut multi = Vec2::ZERO;
+        for _ in 0..steps {
+            multi += v * dt;
+        }
+
+        assert!(approx_eq(single, multi));
+    }
+
+    #[test]
+    fn test_compute_velocity_from_input_mapping() {
+        // Ensure compute_velocity_from_input maps KeyCode presses to the same result as compute_velocity_from_bools
+        let mut keyboard = ButtonInput::<KeyCode>::default();
+        keyboard.press(KeyCode::KeyW);
+        let speed = 90.0;
+        let v_input = compute_velocity_from_input(&keyboard, speed);
+        let v_bools = compute_velocity_from_bools(true, false, false, false, speed);
+        assert!(approx_eq(v_input, v_bools));
+
+        // also verify left mapping
+        let mut keyboard2 = ButtonInput::<KeyCode>::default();
+        keyboard2.press(KeyCode::KeyA);
+        let v_input2 = compute_velocity_from_input(&keyboard2, speed);
+        let v_bools2 = compute_velocity_from_bools(false, false, true, false, speed);
+        assert!(approx_eq(v_input2, v_bools2));
+    }
+
+    #[test]
+    fn test_player_movement_system_integration_headless() {
+        use bevy::time::TimePlugin;
+        use std::time::Duration;
+
+        let mut app = App::new();
+        // headless: only add minimal non-rendering plugins
+        app.add_plugins(TimePlugin);
+
+        // add system under test
+        app.add_systems(Update, player_movement_system);
+
+        // resources
+        app.insert_resource(PlayerSpeed(100.0));
+
+        // simulate keyboard with W pressed (we insert the ButtonInput ourselves to avoid InputPlugin overwriting it)
+        let mut keyboard = ButtonInput::<KeyCode>::default();
+        keyboard.press(KeyCode::KeyW);
+        app.insert_resource(keyboard);
+
+        // ensure time exists via TimePlugin and advance by dt
+        {
+            let mut time = app.world_mut().resource_mut::<Time>();
+            time.advance_by(Duration::from_secs_f32(0.2));
+        }
+
+        // spawn player entity at origin
+        app.world_mut()
+            .spawn((Transform::from_xyz(0.0, 0.0, 0.0), Player));
+
+        // inspect transform before update
+        {
+            let mut query_state = app.world_mut().query::<(&Transform, &Player)>();
+            for (transform, _player) in query_state.iter(app.world()) {
+                println!(
+                    "before update y={} expected={}",
+                    transform.translation.y,
+                    100.0 * 0.2
+                );
+            }
+        }
+
+        // run the system directly using SystemState to avoid schedule interactions
+        use bevy::ecs::system::SystemState;
+
+        {
+            let world = app.world_mut();
+            #[allow(clippy::type_complexity)]
+            let mut system_state: SystemState<(
+                Res<ButtonInput<KeyCode>>,
+                Res<Time>,
+                Res<PlayerSpeed>,
+                Query<&mut Transform, With<Player>>,
+            )> = SystemState::new(world);
+
+            let (keyboard_res, time_res, speed_res, query) = system_state
+                .get_mut(world)
+                .expect("failed to get system params");
+
+            // call the system function directly with the fetched params
+            player_movement_system(keyboard_res, time_res, speed_res, query);
+        }
+
+        // inspect transform after update and verify translation.y == speed * dt
+        let mut found = false;
+        let mut query_state = app.world_mut().query::<(&Transform, &Player)>();
+        for (transform, _player) in query_state.iter(app.world()) {
+            println!(
+                "after update y={} expected={}",
+                transform.translation.y,
+                100.0 * 0.2
+            );
+            assert!((transform.translation.y - (100.0 * 0.2)).abs() < EPS);
+            found = true;
+        }
+        assert!(found, "Player entity not found in world query");
     }
 }
