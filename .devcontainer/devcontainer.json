@@ -1,0 +1,35 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/debian
+{
+	"name": "ArpgAiLab",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"mounts": [
+    	"source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind",
+		"source=/mnt/c/Users/olivi/Documents/arpg-ai-lab,target=/mnt/c/Users/olivi/Documents/arpg-ai-lab,type=bind"
+  	],
+  	"remoteEnv": {
+    	"SSH_AUTH_SOCK": "/ssh-agent"
+  	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"rust-lang.rust-analyzer",
+				"tamasfe.even-better-toml"
+			]
+		}
+	}
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}

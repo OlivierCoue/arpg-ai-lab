@@ -1,0 +1,20 @@
+# Build output
+target/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Test / coverage
+coverage/
+*.lcov
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
