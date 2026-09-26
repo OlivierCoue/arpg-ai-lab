@@ -20,7 +20,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --pr
 # Install GitHub Copilot CLI
 RUN curl -fsSL https://gh.io/copilot-install | bash
 
-ENV COPILOT_MODEL=mai-code-1.1-flash
+ENV COPILOT_MODEL=gpt-5-mini
 
 # Bevy required dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -29,3 +29,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0 libwayland-dev
 
 RUN rustup target add x86_64-pc-windows-gnu
+
+RUN copilot plugin marketplace add obra/superpowers-marketplace \
+    && copilot plugin install superpowers@superpowers-marketplace
