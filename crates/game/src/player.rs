@@ -33,22 +33,23 @@ fn player_movement_system(
     mut query: Query<&mut Transform, With<Player>>,
 ) {
     let dt = time.delta_secs();
-    let vel = compute_velocity_from_input(&keyboard, speed.0, dt);
+    let vel = compute_velocity_from_input(&keyboard, speed.0);
     if vel != Vec2::ZERO {
+        let delta = vel * dt; // convert velocity (units/sec) to per-frame delta
         for mut transform in query.iter_mut() {
-            transform.translation.x += vel.x;
-            transform.translation.y += vel.y;
+            transform.translation.x += delta.x;
+            transform.translation.y += delta.y;
         }
     }
 }
 
-/// Compute velocity vector from keyboard input; kept small so it can be tested.
-pub fn compute_velocity_from_input(input: &ButtonInput<KeyCode>, speed: f32, dt: f32) -> Vec2 {
+/// Compute velocity vector (units per second) from keyboard input; kept small so it can be tested.
+pub fn compute_velocity_from_input(input: &ButtonInput<KeyCode>, speed: f32) -> Vec2 {
     let up = input.pressed(KeyCode::KeyW);
     let down = input.pressed(KeyCode::KeyS);
     let left = input.pressed(KeyCode::KeyA);
     let right = input.pressed(KeyCode::KeyD);
-    compute_velocity_from_bools(up, down, left, right, speed, dt)
+    compute_velocity_from_bools(up, down, left, right, speed)
 }
 
 /// Testable pure function: compute movement delta from booleans
@@ -58,7 +59,6 @@ pub fn compute_velocity_from_bools(
     left: bool,
     right: bool,
     speed: f32,
-    dt: f32,
 ) -> Vec2 {
     let mut dir = Vec2::ZERO;
     if up {
@@ -76,7 +76,7 @@ pub fn compute_velocity_from_bools(
     if dir == Vec2::ZERO {
         return Vec2::ZERO;
     }
-    dir = dir.normalize() * speed * dt;
+    dir = dir.normalize() * speed; // velocity (units/sec)
     dir
 }
 
@@ -92,37 +92,34 @@ mod tests {
 
     #[test]
     fn test_no_input() {
-        let v = compute_velocity_from_bools(false, false, false, false, 100.0, 0.016);
+        let v = compute_velocity_from_bools(false, false, false, false, 100.0);
         assert_eq!(v, Vec2::ZERO);
     }
 
     #[test]
     fn test_up_movement() {
         let speed = 100.0;
-        let dt = 0.5;
-        let v = compute_velocity_from_bools(true, false, false, false, speed, dt);
-        assert!(approx_eq(v, Vec2::new(0.0, speed * dt)));
+        let v = compute_velocity_from_bools(true, false, false, false, speed);
+        assert!(approx_eq(v, Vec2::new(0.0, speed)));
     }
 
     #[test]
     fn test_left_movement() {
         let speed = 120.0;
-        let dt = 0.25;
-        let v = compute_velocity_from_bools(false, false, true, false, speed, dt);
-        assert!(approx_eq(v, Vec2::new(-speed * dt, 0.0)));
+        let v = compute_velocity_from_bools(false, false, true, false, speed);
+        assert!(approx_eq(v, Vec2::new(-speed, 0.0)));
     }
 
     #[test]
     fn test_diagonal_normalization() {
         let speed = 50.0;
-        let dt = 0.1;
-        let v = compute_velocity_from_bools(true, false, false, true, speed, dt); // up + right
-        let expected_component = (speed * dt) / 2f32.sqrt();
+        let v = compute_velocity_from_bools(true, false, false, true, speed); // up + right
+        let expected_component = speed / 2f32.sqrt();
         assert!(approx_eq(
             v,
             Vec2::new(expected_component, expected_component)
         ));
         let len = v.length();
-        assert!((len - speed * dt).abs() < EPS);
+        assert!((len - speed).abs() < EPS);
     }
 }
