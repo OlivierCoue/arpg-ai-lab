@@ -277,17 +277,32 @@ mod tests {
 
         // spawn camera entity with an initial z so we can verify z is preserved
         let initial_cam_z = 10.0_f32;
-        app.world_mut().spawn((Transform::from_xyz(0.0, 0.0, initial_cam_z), crate::camera::GameCamera));
+        app.world_mut().spawn((
+            Transform::from_xyz(0.0, 0.0, initial_cam_z),
+            crate::camera::GameCamera,
+        ));
 
         // run the full app update so Update then PostUpdate systems run in order
         app.update();
 
         // query results
         let mut player_tf_q = app.world_mut().query::<(&Transform, &Player)>();
-        let mut cam_tf_q = app.world_mut().query::<(&Transform, &crate::camera::GameCamera)>();
+        let mut cam_tf_q = app
+            .world_mut()
+            .query::<(&Transform, &crate::camera::GameCamera)>();
 
-        let player_pos = player_tf_q.iter(app.world()).next().expect("player missing").0.translation;
-        let cam_pos = cam_tf_q.iter(app.world()).next().expect("camera missing").0.translation;
+        let player_pos = player_tf_q
+            .iter(app.world())
+            .next()
+            .expect("player missing")
+            .0
+            .translation;
+        let cam_pos = cam_tf_q
+            .iter(app.world())
+            .next()
+            .expect("camera missing")
+            .0
+            .translation;
 
         // expected camera position = player position + offset
         let offset = app.world().resource::<crate::camera::CameraOffset>().0;
