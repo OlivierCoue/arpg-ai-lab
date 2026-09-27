@@ -1,5 +1,6 @@
 use crate::player::Player;
 use bevy::prelude::*;
+use bevy::transform::TransformSystems;
 
 /// Configurable camera offset resource (world units)
 #[derive(Resource)]
@@ -15,7 +16,7 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(CameraOffset(Vec3::ZERO))
             .add_systems(Startup, spawn_camera)
-            .add_systems(PostUpdate, camera_follow_system);
+            .add_systems(PostUpdate, camera_follow_system.before(TransformSystems::Propagate));
     }
 }
 
