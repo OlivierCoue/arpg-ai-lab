@@ -240,4 +240,60 @@ mod tests {
         }
         assert!(found, "Player entity not found in world query");
     }
+
+    #[test]
+    fn test_camera_follow_headless() {
+        use bevy::time::TimePlugin;
+        use std::time::Duration;
+
+        let mut app = App::new();
+        // headless: only add minimal non-rendering plugins
+        app.add_plugins(TimePlugin);
+
+        // add systems: player movement (Update) and camera follow (PostUpdate)
+        app.add_systems(Update, player_movement_system);
+        app.add_systems(PostUpdate, crate::camera::camera_follow_system);
+
+        // resources
+        app.insert_resource(PlayerSpeed(100.0));
+
+        // non-zero camera offset to verify it's applied
+        app.insert_resource(crate::camera::CameraOffset(Vec3::new(2.0, -1.0, 0.0)));
+
+        // simulate keyboard with W pressed
+        let mut keyboard = ButtonInput::<KeyCode>::default();
+        keyboard.press(KeyCode::KeyW);
+        app.insert_resource(keyboard);
+
+        // advance time by dt
+        {
+            let mut time = app.world_mut().resource_mut::<Time>();
+            time.advance_by(Duration::from_secs_f32(0.2));
+        }
+
+        // spawn player entity at origin
+        app.world_mut()
+            .spawn((Transform::from_xyz(0.0, 0.0, 0.0), Player));
+
+        // spawn camera entity with an initial z so we can verify z is preserved
+        let initial_cam_z = 10.0_f32;
+        app.world_mut().spawn((Transform::from_xyz(0.0, 0.0, initial_cam_z), crate::camera::GameCamera));
+
+        // run the full app update so Update then PostUpdate systems run in order
+        app.update();
+
+        // query results
+        let mut player_tf_q = app.world_mut().query::<(&Transform, &Player)>();
+        let mut cam_tf_q = app.world_mut().query::<(&Transform, &crate::camera::GameCamera)>();
+
+        let player_pos = player_tf_q.iter(app.world()).next().expect("player missing").0.translation;
+        let cam_pos = cam_tf_q.iter(app.world()).next().expect("camera missing").0.translation;
+
+        // expected camera position = player position + offset
+        let offset = app.world().resource::<crate::camera::CameraOffset>().0;
+        assert!((cam_pos.x - (player_pos.x + offset.x)).abs() < EPS);
+        assert!((cam_pos.y - (player_pos.y + offset.y)).abs() < EPS);
+        // z should be preserved
+        assert!((cam_pos.z - initial_cam_z).abs() < EPS);
+    }
 }
