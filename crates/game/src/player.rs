@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::health::Health;
+
 /// Marker component for the player entity
 #[derive(Component)]
 pub struct Player;
@@ -18,12 +20,13 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-fn spawn_player(mut commands: Commands) {
+fn spawn_player(mut commands: Commands, config: Res<crate::health::PlayerHealthConfig>) {
     // Spawn a simple visible sprite as the player with an explicit Transform so it appears in world space
     commands.spawn((
         Sprite::from_color(Color::srgb(0.3, 0.7, 0.9), Vec2::new(32.0, 32.0)),
         Transform::from_xyz(0.0, 0.0, 0.0),
         Player,
+        Health::new(config.0),
     ));
 }
 
