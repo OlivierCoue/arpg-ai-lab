@@ -1,4 +1,5 @@
 use crate::player::Player;
+use crate::scenes::AppState;
 use bevy::prelude::*;
 use bevy::transform::TransformSystems;
 
@@ -15,11 +16,14 @@ pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(CameraOffset(Vec3::ZERO))
-            .add_systems(Startup, spawn_camera)
+            .add_systems(OnEnter(AppState::InGame), spawn_camera)
             .add_systems(
                 PostUpdate,
-                camera_follow_system.before(TransformSystems::Propagate),
-            );
+                camera_follow_system
+                    .before(TransformSystems::Propagate)
+                    .run_if(in_state(AppState::InGame)),
+            )
+            .add_systems(OnExit(AppState::InGame), cleanup_camera);
     }
 }
 
@@ -27,6 +31,12 @@ fn spawn_camera(mut commands: Commands) {
     // Spawn exactly one 2D camera for gameplay and tag it so we can find it later
     // Use the simple Camera2d marker so exactly one 2D camera is present
     commands.spawn((Camera2d, GameCamera));
+}
+
+fn cleanup_camera(mut commands: Commands, query: Query<Entity, With<GameCamera>>) {
+    for e in query.iter() {
+        commands.entity(e).despawn();
+    }
 }
 
 pub(crate) fn camera_follow_system(

@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::health::Health;
+use crate::scenes::AppState;
 
 /// Marker component for the player entity
 #[derive(Component)]
@@ -15,8 +16,12 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(PlayerSpeed(200.0))
-            .add_systems(Startup, spawn_player)
-            .add_systems(Update, player_movement_system);
+            .add_systems(OnEnter(AppState::InGame), spawn_player)
+            .add_systems(
+                Update,
+                player_movement_system.run_if(in_state(AppState::InGame)),
+            )
+            .add_systems(OnExit(AppState::InGame), cleanup_player);
     }
 }
 
@@ -28,6 +33,12 @@ fn spawn_player(mut commands: Commands, config: Res<crate::health::PlayerHealthC
         Player,
         Health::new(config.0),
     ));
+}
+
+fn cleanup_player(mut commands: Commands, query: Query<Entity, With<Player>>) {
+    for e in query.iter() {
+        commands.entity(e).despawn();
+    }
 }
 
 fn player_movement_system(

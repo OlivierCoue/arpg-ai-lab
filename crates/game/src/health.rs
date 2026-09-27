@@ -43,6 +43,10 @@ pub struct PlayerHealthConfig(pub i32);
 #[derive(Component)]
 pub struct HealthText;
 
+/// Marker for the health-ui parent node so it can be cleaned up on exit
+#[derive(Component)]
+pub struct HealthUiParent;
+
 pub struct HealthPlugin;
 
 impl Plugin for HealthPlugin {
@@ -50,10 +54,20 @@ impl Plugin for HealthPlugin {
         app.insert_resource(PlayerHealthConfig(100))
             // register the message type so MessageWriter/Reader work
             .add_message::<DamageRequest>()
-            .add_systems(Startup, spawn_health_ui)
-            // ensure writers run before readers by chaining
-            .add_systems(Update, (debug_damage_input_system, damage_system).chain())
-            .add_systems(Update, health_ui_system);
+            // spawn UI only when in the InGame state
+            .add_systems(OnEnter(crate::scenes::AppState::InGame), spawn_health_ui)
+            // ensure writers run before readers by chaining and only while in InGame
+            .add_systems(
+                Update,
+                (debug_damage_input_system, damage_system)
+                    .chain()
+                    .run_if(in_state(crate::scenes::AppState::InGame)),
+            )
+            .add_systems(
+                Update,
+                health_ui_system.run_if(in_state(crate::scenes::AppState::InGame)),
+            )
+            .add_systems(OnExit(crate::scenes::AppState::InGame), cleanup_health_ui);
     }
 }
 
@@ -90,7 +104,7 @@ fn debug_damage_input_system(
 }
 
 fn spawn_health_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
-    // UI camera is created elsewhere (camera plugin spawns Camera2d). Spawn a simple top-left Text
+    // UI camera is created in the menu or camera plugins; Spawn a simple top-left Text
     // Parent text node showing label; dynamic value will be a child TextSpan we update.
     let parent = commands
         .spawn((
@@ -101,6 +115,7 @@ fn spawn_health_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                 top: Val::Px(5.0),
                 ..default()
             },
+            HealthUiParent,
         ))
         .id();
 
@@ -125,6 +140,19 @@ fn health_ui_system(
         } else {
             **span = format!("{} / {}", health.current, health.max);
         }
+    }
+}
+
+fn cleanup_health_ui(
+    mut commands: Commands,
+    query_parent: Query<Entity, With<HealthUiParent>>,
+    query_span: Query<Entity, With<HealthText>>,
+) {
+    for e in query_span.iter() {
+        commands.entity(e).despawn();
+    }
+    for e in query_parent.iter() {
+        commands.entity(e).despawn();
     }
 }
 
