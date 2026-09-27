@@ -1,15 +1,13 @@
 use bevy::prelude::*;
+mod camera;
 mod player;
+mod world;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(player::PlayerPlugin)
-        .add_systems(Startup, setup)
+        .add_plugins(camera::CameraPlugin)
+        .add_plugins(world::WorldPlugin)
         .run();
-}
-
-fn setup(mut commands: Commands) {
-    // 2D camera
-    commands.spawn(Camera2d);
 }
