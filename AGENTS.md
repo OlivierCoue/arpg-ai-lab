@@ -6,26 +6,26 @@ This is a small Diablo-like ARPG built with Rust and Bevy.
 
 The project is also an experiment in AI-assisted and agentic software development.
 
-Agents are expected to work as software engineers: inspect the repository, verify assumptions, make focused changes, run validation, and report what was actually verified.
+Agents must work like software engineers: inspect the repository, verify assumptions, make focused changes, validate them, and report what was actually verified.
 
 ---
 
-## Superpowers
+## Agent Workflow
+
+### Superpowers
 
 This project uses the Superpowers skills workflow.
 
 Superpowers must be used for every non-trivial coding task.
 
-Before making code changes:
+Before modifying code:
 
-1. Check the available Superpowers skills.
-2. Determine which skill or skills apply to the task.
-3. Read and follow the relevant skill instructions.
+1. Inspect the available Superpowers skills.
+2. Select the skill or skills relevant to the task.
+3. Read and follow their instructions.
 4. Complete the required planning, brainstorming, debugging, or testing workflow before implementation.
 
-### Required skill selection
-
-Use the appropriate workflow depending on the task:
+Use the appropriate workflow:
 
 * New feature or significant change → `brainstorming` → `writing-plans` → implementation
 * Multi-step implementation → `writing-plans`
@@ -34,158 +34,77 @@ Use the appropriate workflow depending on the task:
 * Code review → appropriate review workflow
 * Refactoring → appropriate planning/testing workflow
 
-If unsure which skill applies, inspect the available Superpowers skills before proceeding.
+Do not merely mention a skill. Actually read and follow its instructions.
 
-Do not merely mention a Superpowers skill. Actually read and follow its instructions.
+### Skills
+
+Skills are stored under `.github/skills/`.
+
+When a task involves Bevy ECS, queries, components, mutable ECS access, system scheduling, or query access conflicts, read and follow:
+
+`.github/skills/bevy-ecs/SKILL.md`
+
+Do not assume a skill is understood from its name alone. Read the actual `SKILL.md` before implementation.
+
+### Issue Scope
+
+Treat the GitHub issue as the implementation contract.
+
+Before coding:
+
+* understand the requirements;
+* identify acceptance criteria;
+* identify constraints;
+* identify what is explicitly out of scope.
+
+Do not expand the scope without justification.
+
+If the issue is ambiguous or technically impossible as written, explain the ambiguity before making substantial changes.
 
 ---
 
-## Bevy Version
+## Bevy
 
-This project uses **Bevy 0.19.1**.
+This project uses **Bevy 0.19.1**. This is a strict requirement.
 
-This version is a strict requirement.
+All Bevy code, APIs, examples, dependencies, and documentation must be compatible with Bevy 0.19.1.
 
-All Bevy-related code, APIs, examples, dependencies, and documentation must be compatible with Bevy 0.19.1.
+Do not use APIs from older Bevy releases, Bevy `main`, or development versions.
 
-Do not use APIs from:
+### Sources of Truth
 
-* Bevy 0.18
-* Bevy 0.17
-* Bevy 0.16
-* older versions
-* Bevy `main`
-* Bevy development versions
-
-Do not assume that an API exists because it existed in a previous Bevy version.
-
----
-
-## Bevy Source of Truth
-
-When working with Bevy, never rely solely on internal model knowledge.
-
-The authoritative sources are, in this order:
+When working with Bevy, use these sources in order:
 
 1. The exact Bevy 0.19.1 source installed in the local Cargo registry.
-2. Bevy 0.19.1 Rust documentation:
+2. Bevy 0.19.1 documentation:
    https://docs.rs/bevy/0.19.1/bevy/
 3. Official Bevy 0.19.1 examples:
    https://github.com/bevyengine/bevy/tree/release-0.19.1/examples
 
-The local installed source and the resolved dependency version are especially important because they represent the exact version used by this repository.
+Never use examples from `main` or another Bevy release as authoritative.
 
-Never use Bevy examples from `main` or another release.
-
----
-
-## Mandatory Bevy Verification
+### API Verification
 
 For every task involving Bevy APIs:
 
 1. Inspect `Cargo.toml` and `Cargo.lock`.
-2. Confirm the actual resolved Bevy version.
-3. Identify the Bevy API required by the task.
-4. Verify that API against the locally installed Bevy 0.19.1 source.
-5. If useful, verify the usage against the official Bevy 0.19.1 examples.
-6. Only then write the implementation.
+2. Confirm the resolved Bevy version.
+3. Identify the APIs required by the task.
+4. Verify those APIs against the local Bevy 0.19.1 source.
+5. Check the official 0.19.1 examples when useful.
+6. Only then implement the code.
 
-If an API cannot be verified, do not invent or guess it.
+If remembered knowledge conflicts with the local source, trust the local source.
 
-If remembered knowledge conflicts with the local Bevy 0.19.1 source, trust the local source.
-
-### Anti-hallucination rule
-
-Do not write Bevy code based on familiarity with another Bevy version.
-
-For example, do not assume that a previously known:
-
-* component
-* bundle
-* system API
-* query API
-* schedule API
-* event API
-* resource API
-* rendering API
-* input API
-* asset API
-
-still exists in Bevy 0.19.1.
-
-Verify it first.
-
----
-
-## Bevy Implementation Workflow
-
-For any non-trivial Bevy task:
-
-1. Read the relevant Superpowers skill.
-2. Inspect the existing project structure and code.
-3. Inspect `Cargo.toml` and `Cargo.lock`.
-4. Verify the exact Bevy version.
-5. Inspect the local Bevy 0.19.1 source for the APIs required.
-6. Check the corresponding Bevy 0.19.1 examples when useful.
-7. Create the implementation plan.
-8. Implement the smallest focused change that satisfies the requirements.
-9. Run formatting.
-10. Run compilation checks.
-11. Run Clippy.
-12. Run tests.
-13. Fix any issues discovered by validation.
-14. Report the validation actually performed.
-
-Do not skip API verification merely because the task appears simple.
-
----
-
-## Validation
-
-Before considering a task complete, run:
-
-```bash
-cargo fmt --all --check
-cargo check --workspace
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-```
-
-If the repository provides a project validation script, prefer using that script.
-
-Never remove, weaken, or bypass tests or compiler checks just to make the task pass.
-
-If validation fails, investigate and fix the underlying problem.
-
-Do not hide or ignore compiler warnings.
-
----
-
-## Development
-
-Use stable Rust.
-
-Prefer idiomatic, simple Rust over clever abstractions.
-
-Keep functions, systems, and modules focused.
-
-Avoid unnecessary dependencies.
-
-Do not introduce an abstraction unless it provides a clear benefit.
-
-Do not prematurely optimize.
-
-Prefer code that is easy for another developer or agent to understand and modify.
+Never invent or guess a Bevy API.
 
 ---
 
 ## Architecture
 
-The project is a Diablo-like ARPG.
-
 Keep gameplay logic separated from presentation/rendering where practical.
 
-Prefer the following conceptual separation:
+Prefer this conceptual flow:
 
 ```text
 Input
@@ -201,25 +120,49 @@ Presentation
 
 Gameplay rules should be testable without requiring the renderer whenever practical.
 
-Avoid putting substantial gameplay logic directly inside rendering or input systems.
-
 Prefer small, focused Bevy systems over large systems containing unrelated responsibilities.
+
+Avoid substantial gameplay logic directly inside rendering or input systems.
 
 Do not introduce large global state structures when smaller components, resources, or focused modules are more appropriate.
 
 ---
 
+## Rust and Code Quality
+
+Use stable Rust.
+
+Prefer simple, idiomatic Rust over clever abstractions.
+
+Keep functions, systems, and modules focused.
+
+Avoid unnecessary:
+
+* allocations;
+* cloning;
+* synchronization;
+* dependencies;
+* abstractions;
+* global state;
+* per-frame work.
+
+Do not prematurely optimize. Prefer measurable or clearly foreseeable performance improvements.
+
+Code should be easy for another developer or agent to understand and modify.
+
+---
+
 ## Dependencies
 
-Avoid adding dependencies unless they are necessary for the task.
+Avoid adding dependencies unless necessary.
 
-All shared dependencies must be declared in the workspace root `Cargo.toml`.
+Shared dependencies must be declared in the workspace root `Cargo.toml`.
 
 Member crates must reference workspace dependencies.
 
 Example:
 
-Root `Cargo.toml`:
+Root:
 
 ```toml
 [workspace.dependencies]
@@ -233,11 +176,11 @@ Member crate:
 bevy = { workspace = true }
 ```
 
-Do not independently specify versions for workspace-managed dependencies in member crates.
+Do not independently specify versions for workspace-managed dependencies.
 
 When adding a Bevy-related dependency:
 
-1. Verify that its version is compatible with Bevy 0.19.1.
+1. Verify compatibility with Bevy 0.19.1.
 2. Add it to the workspace root.
 3. Reference it from the member crate using `{ workspace = true }`.
 
@@ -245,45 +188,145 @@ Do not upgrade or downgrade Bevy-related dependencies unless explicitly requeste
 
 ---
 
-## Git
+## Validation
 
-Keep changes focused on the current task.
-
-Do not modify unrelated files.
-
-Do not rewrite unrelated code.
-
-Do not make broad refactors while implementing a focused feature.
-
-Prefer one focused branch and pull request per task.
-
-Use clear commit messages.
-
-Before creating a pull request:
+Before considering a task complete, run:
 
 ```bash
-git diff
-git status
+cargo fmt --all --check
+cargo check --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
 ```
 
-Review the changes and make sure they correspond to the requested task.
+If the repository provides a validation script, prefer using it.
+
+If validation fails, investigate and fix the underlying problem.
+
+Never:
+
+* remove or weaken tests to make validation pass;
+* bypass compiler checks;
+* ignore warnings;
+* claim validation passed when it was not run.
+
+Report the validation that was actually performed.
 
 ---
 
-## Issue and Pull Request Scope
+## Git Workflow
 
-Treat the GitHub issue as the contract for the implementation.
+Each GitHub issue must be implemented on its own dedicated branch.
 
-Before coding:
+### Before implementation
 
-* understand the issue requirements;
-* identify acceptance criteria;
-* identify constraints;
-* identify what is explicitly out of scope.
+Start from the latest `main`:
 
-Do not expand the scope without justification.
+```bash
+git checkout main
+git pull --ff-only
+```
 
-If the issue is ambiguous or technically impossible as written, explain the ambiguity before making substantial changes.
+Then create a dedicated branch:
+
+```bash
+git checkout -b <branch-name>
+```
+
+Prefer descriptive names such as:
+
+```text
+feature/<short-description>
+fix/<short-description>
+refactor/<short-description>
+```
+
+Include the issue number when available:
+
+```text
+feature/2-player-combat
+fix/15-player-collision
+```
+
+Never implement an issue directly on `main`.
+
+### During implementation
+
+Keep all changes for the issue on its dedicated branch.
+
+Do not modify unrelated files or perform broad refactors.
+
+Before committing:
+
+```bash
+git status
+git diff
+```
+
+Review the complete diff and ensure every change belongs to the current issue.
+
+Run the full project validation before committing.
+
+### Commit
+
+Use focused commits with clear messages.
+
+Prefer conventional commit-style messages when appropriate:
+
+```text
+feat: add player combat
+fix: prevent duplicate damage
+test: add player combat tests
+refactor: extract damage calculation
+```
+
+Do not create commits containing unrelated changes.
+
+### Push
+
+After validation succeeds:
+
+```bash
+git push -u origin <branch-name>
+```
+
+### Pull Request
+
+After pushing the branch, create a Pull Request targeting `main`.
+
+The PR must:
+
+* target `main`;
+* reference the GitHub issue;
+* summarize the implementation;
+* mention important design decisions when relevant;
+* mention tests and validation performed.
+
+Use GitHub closing syntax when appropriate:
+
+```text
+Closes #<issue-number>
+```
+
+This allows GitHub to automatically close the issue when the PR is merged.
+
+Do not merge the Pull Request unless explicitly authorized by the user.
+
+### Review Cycle
+
+After creating the PR:
+
+1. Wait for CI and automated code review.
+2. Inspect all review findings.
+3. Determine whether each finding is valid.
+4. Fix valid findings on the same feature branch.
+5. Push the fixes.
+6. Wait for CI and automated review again.
+7. Report the final status to the user.
+
+Do not create a new PR to address review comments.
+
+The human developer retains responsibility for the final merge.
 
 ---
 
@@ -293,19 +336,24 @@ Agents should:
 
 * inspect before modifying;
 * verify assumptions;
-* make focused changes;
+* follow the issue scope;
+* follow the Superpowers workflow;
+* verify Bevy APIs against the exact installed version;
 * prefer existing project patterns;
+* make the smallest focused change;
 * use the compiler and tests as feedback;
 * investigate failures rather than guessing;
 * report what was actually verified.
 
-Agents should not:
+Agents must not:
 
 * invent APIs;
 * rely on outdated Bevy knowledge;
+* implement directly on `main`;
 * perform unrelated refactors;
 * add unnecessary dependencies;
 * remove tests to make CI pass;
+* bypass validation;
 * claim that documentation or source was checked when it was not;
 * claim that tests passed when they were not run.
 
