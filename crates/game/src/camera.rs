@@ -25,7 +25,7 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn((Camera2d, GameCamera));
 }
 
-fn camera_follow_system(
+pub(crate) fn camera_follow_system(
     player_query: Query<&Transform, (With<Player>, Without<GameCamera>)>,
     mut cam_query: Query<&mut Transform, (With<GameCamera>, Without<Player>)>,
     offset: Res<CameraOffset>,
